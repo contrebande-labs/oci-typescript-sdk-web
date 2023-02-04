@@ -6,7 +6,6 @@
 /* This utility adds extra headers to each request before being sent over wire*/
 
 import { version } from "../package.json";
-import { v1 } from "uuid";
 
 const OPC_REQUEST_ID_HEADER: string = "opc-request-id";
 const BROWSER_USER_AGENT_HEADER: string = "X-Orcl-User-Agent";
@@ -26,7 +25,7 @@ function hasOpcRequestId(headers: Headers) {
 }
 
 function generateRequestId() {
-  return v1()
+  return crypto.randomUUID()
     .replace("-", "")
     .toLocaleUpperCase("en-US");
 }

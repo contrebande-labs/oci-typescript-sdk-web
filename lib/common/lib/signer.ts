@@ -3,17 +3,15 @@
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 
-import * as auth from "./auth/auth";
-import { getStringFromRequestBody } from "./helper";
-import { Method } from "./request-generator";
-import { HttpRequest } from "./http-request";
+import * as auth from "./auth";
 
-type Buffer = any;
-declare const Buffer: Buffer;
-declare const UrlParser: any;
-declare const jssha: any;
-declare const parsePrivateKey: any;
-declare const httpSignature: any;
+
+export function parsePrivateKey(privateKey: any, mode: string, options: any): any {
+
+  return {};
+
+}
+
 
 // tslint:disable-next-line:no-var-requires
 const HEADER_CONTENT_SHA = "x-content-sha256";
@@ -27,9 +25,9 @@ const EMPTY_SHA = "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=";
 export class SignerRequest {
   method: string;
   path?: string | null;
-  constructor(method: Method, url: string, private headers: Headers) {
+  constructor(method: string, url: string, private headers: Headers) {
     this.method = method;
-    this.path = UrlParser.parse(url).path;
+    this.path = new URL(url).pathname;
   }
 
   public getHeader(name: string): string | null {
@@ -49,7 +47,7 @@ export interface RequestSigner {
    * @param request http request .
    * @param forceExcludeBody exclude body or not.
    */
-  signHttpRequest(request: HttpRequest, forceExcludeBody?: boolean): void;
+  signHttpRequest(request: Request, requestBody: string, forceExcludeBody?: boolean): void;
 }
 
 /**
@@ -59,7 +57,7 @@ export class DefaultRequestSigner implements RequestSigner {
   private static readonly headersToSign = ["x-date", "(request-target)", "host"];
   private static readonly methodsThatRequireExtraHeaders = ["POST", "PUT", "PATCH"];
   private delegationToken: string = "";
-  private privateKeyBuffer: Buffer;
+  private privateKeyBuffer: ArrayBuffer;
   private privateKey: string = "";
 
   /**
@@ -79,7 +77,7 @@ export class DefaultRequestSigner implements RequestSigner {
       this.authenticationDetailsProvider.getAuthType &&
       this.authenticationDetailsProvider.getAuthType()
     ) {
-      this.privateKeyBuffer = (null as unknown) as Buffer;
+      this.privateKeyBuffer = (null as unknown) as ArrayBuffer;
       const delegationToken = this.authenticationDetailsProvider.getDelegationToken!()!;
       this.delegationToken = delegationToken;
       return;
@@ -98,7 +96,7 @@ export class DefaultRequestSigner implements RequestSigner {
    * @param request http request.
    * @param forceExcludeBody exclude body or not.
    */
-  async signHttpRequest(request: HttpRequest, forceExcludeBody: boolean = false) {
+  async signHttpRequest(request: Request, requestBody: string, forceExcludeBody: boolean = false) {
     // Populate missing headers required for signing
     let options = {};
     if (this.authenticationDetailsProvider.getPassphrase()) {
@@ -106,9 +104,9 @@ export class DefaultRequestSigner implements RequestSigner {
     }
 
     if (!request.headers.has("host")) {
-      const url = UrlParser.parse(request.uri);
-      if (url.host) {
-        request.headers.set("host", url.host);
+      const url = new URL(request.url);
+      if (url.hostname) {
+        request.headers.set("host", url.hostname);
       } else {
         throw new Error("Cannot parse host from url");
       }
@@ -130,26 +128,21 @@ export class DefaultRequestSigner implements RequestSigner {
       DefaultRequestSigner.methodsThatRequireExtraHeaders.indexOf(request.method.toUpperCase()) !==
         -1
     ) {
+
       if (!request.headers.has(HEADER_CONTENT_TYPE)) {
         request.headers.set(HEADER_CONTENT_TYPE, "application/json");
       }
 
-      let contentLen = 0;
-      const shaObj = new jssha("SHA-256", "TEXT");
-      if (request.body) {
-        const bodyStringContent: string = await getStringFromRequestBody(request.body);
-        shaObj.update(bodyStringContent);
-        request.headers.set(HEADER_CONTENT_SHA, shaObj.getHash("B64"));
-        contentLen = Buffer.byteLength(bodyStringContent, "utf8");
-      }
-
-      if (contentLen == 0) {
+      if (requestBody && requestBody.length > 0) {
+        const bodyEncodedContent = new TextEncoder().encode(requestBody);
+        const hash = await crypto.subtle.digest("SHA-256", bodyEncodedContent);
+        const b64hash = btoa(String.fromCharCode(...new Uint8Array(hash)));
+        request.headers.set(HEADER_CONTENT_SHA, b64hash);
+        request.headers.set(HEADER_CONTENT_LEN, `${ bodyEncodedContent.length }`)
+      } else {
         // if buffer is empty, it can only be an empty string payload
         request.headers.set(HEADER_CONTENT_SHA, EMPTY_SHA);
-      }
-
-      if (!request.headers.has(HEADER_CONTENT_LEN)) {
-        request.headers.set(HEADER_CONTENT_LEN, `${contentLen}`);
+        request.headers.set(HEADER_CONTENT_LEN, `0`);
       }
 
       headersToSign = headersToSign.concat(
@@ -168,7 +161,7 @@ export class DefaultRequestSigner implements RequestSigner {
       this.privateKeyBuffer = parsePrivateKey(authPrivateKey, "auto", options).toBuffer("pem", {});
     }
 
-    httpSignature.sign(new SignerRequest(request.method, request.uri, request.headers), {
+    this.sign(new SignerRequest(request.method, request.url, request.headers), {
       key: this.privateKeyBuffer,
       keyId: keyId,
       headers: headersToSign
@@ -183,5 +176,10 @@ export class DefaultRequestSigner implements RequestSigner {
     } else {
       throw new Error("Unable to sign request");
     }
+  }
+  sign(request: SignerRequest, options: any) : any {
+
+    return {};
+
   }
 }

@@ -5,7 +5,7 @@
 
 import { Realm } from "./realm";
 import { RegionMetadataSchema } from "./region-metadata-schema";
-import { FetchHttpClient } from "./http";
+
 
 export class Region {
   /**
@@ -171,35 +171,6 @@ export class Region {
         Region.imdsRegionMetadata.regionKey
       );
       Region.imdsRegionMetadata = undefined;
-    }
-  }
-
-  /*
-   * Enable instance metadata lookup for region info
-   */
-  public static async enableInstanceMetadata(): Promise<void> {
-    if (!Region.hasCalledForImds) {
-      Region.hasCalledForImds = true;
-      try {
-        const url: string = Region.IMDS_BASE_URL + "instance/regionInfo/";
-        let headers = new Headers();
-        headers.append(Region.CONTENT_TYPE_HEADER, Region.CONTENT_TYPE_HEADER_VALUE);
-        headers.append(Region.AUTHORIZATION, Region.METADATA_AUTH_HEADERS);
-        const httpClient = new FetchHttpClient(null);
-        const response = await httpClient.send({
-          uri: url,
-          method: "GET",
-          headers: headers
-        });
-        const regionMetadata = (await response.json()) as RegionMetadataSchema;
-        if (RegionMetadataSchema.isValidSchema(regionMetadata)) {
-          Region.imdsRegionMetadata = regionMetadata;
-        }
-      } catch (error) {
-        console.log(
-          "Unable to retrieve region metadata from instance metadata service, reason :" + error
-        );
-      }
     }
   }
 
