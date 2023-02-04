@@ -47,7 +47,7 @@ export interface RequestSigner {
    * @param request http request .
    * @param forceExcludeBody exclude body or not.
    */
-  signHttpRequest(request: Request, requestBody: string, forceExcludeBody?: boolean): void;
+  signHttpRequest(request: Request, requestBody?: string, forceExcludeBody?: boolean): void;
 }
 
 /**
@@ -96,7 +96,7 @@ export class DefaultRequestSigner implements RequestSigner {
    * @param request http request.
    * @param forceExcludeBody exclude body or not.
    */
-  async signHttpRequest(request: Request, requestBody: string, forceExcludeBody: boolean = false) {
+  async signHttpRequest(request: Request, requestBody?: string, forceExcludeBody: boolean = false) {
     // Populate missing headers required for signing
     let options = {};
     if (this.authenticationDetailsProvider.getPassphrase()) {

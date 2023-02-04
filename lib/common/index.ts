@@ -5,9 +5,7 @@
 
 import { SimpleAuthenticationDetailsProvider } from "./lib/auth";
 import { DefaultRequestSigner } from "./lib/signer";
-import { HttpRequest } from "./lib/http-request";
 export {
   SimpleAuthenticationDetailsProvider,
-  DefaultRequestSigner,
-  HttpRequest,
+  DefaultRequestSigner
 };

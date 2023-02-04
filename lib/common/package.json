@@ -1,6 +1,6 @@
 {
   "name": "@contrebande-labs/oci-signer-web",
-  "version": "2.50.4",
+  "version": "1.0.0",
   "description": "OCI Common module for NodeJS",
   "repository": {
     "type": "git",
