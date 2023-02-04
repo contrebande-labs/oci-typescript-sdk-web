@@ -4,8 +4,6 @@
  */
 
 import { Realm } from "./realm";
-import { ConfigFileReader } from "./config-file-reader";
-import { readFileSync } from "fs";
 import { RegionMetadataSchema } from "./region-metadata-schema";
 import { FetchHttpClient } from "./http";
 
@@ -134,23 +132,10 @@ export class Region {
       );
       Region.hasWarnedAboutValuesWithoutInstanceMetadataService = true;
     }
-    Region.registerAllRegions();
 
     return Array.from(this.KNOWN_REGIONS.values());
   }
 
-  /**
-   *  Register all regions and sets status
-   */
-  private static registerAllRegions(): void {
-    if (!Region._hasUsedConfigFile) {
-      Region.addRegionsFromConfigFile();
-    }
-
-    if (!Region.hasUsedEnvVar) {
-      Region.addRegionFromEnvVar();
-    }
-  }
 
   public static fromRegionId(regionId: string): Region {
     /*
@@ -164,16 +149,6 @@ export class Region {
 
     let foundRegion = Region.KNOWN_REGIONS.get(regionId);
 
-    if (!foundRegion) {
-      Region.addRegionsFromConfigFile();
-      foundRegion = Region.KNOWN_REGIONS.get(regionId);
-    }
-
-    if (!foundRegion) {
-      Region.addRegionFromEnvVar();
-      foundRegion = Region.KNOWN_REGIONS.get(regionId);
-    }
-
     if (!foundRegion && Region.hasCalledForImds) {
       Region.addRegionFromImds();
       foundRegion = Region.KNOWN_REGIONS.get(regionId);
@@ -182,56 +157,7 @@ export class Region {
     return foundRegion!;
   }
 
-  // Adds regions from the config file
-  private static addRegionsFromConfigFile(): void {
-    if (!Region._hasUsedConfigFile) {
-      Region._hasUsedConfigFile = true;
-      let expandedRegionConfigFilePath = ConfigFileReader.expandUserHome(
-        Region.REGIONS_CONFIG_FILE_PATH
-      );
-      if (ConfigFileReader.fileExists(expandedRegionConfigFilePath)) {
-        try {
-          const fileContent = readFileSync(expandedRegionConfigFilePath, "utf8");
-          const regionMetadata = JSON.parse(fileContent) as RegionMetadataSchema[];
-          if (regionMetadata && regionMetadata.length > 0 && Array.isArray(regionMetadata)) {
-            regionMetadata.map(metadata => {
-              if (RegionMetadataSchema.isValidSchema(metadata)) {
-                Region.register(
-                  metadata.regionIdentifier,
-                  Realm.register(metadata.realmKey, metadata.realmDomainComponent),
-                  metadata.regionKey
-                );
-              }
-            });
-          }
-        } catch (error) {
-          console.log("error reading or parsing region config file");
-        }
-      }
-    }
-  }
 
-  // Adds region from the environment variable
-  private static addRegionFromEnvVar(): void {
-    if (!Region.hasUsedEnvVar) {
-      Region.hasUsedEnvVar = true;
-      const envVarRegionMetadata = process.env[Region.OCI_REGION_METADATA_ENV_VAR];
-      if (envVarRegionMetadata) {
-        try {
-          const regionMetadata = JSON.parse(envVarRegionMetadata) as RegionMetadataSchema;
-          if (RegionMetadataSchema.isValidSchema(regionMetadata)) {
-            Region.register(
-              regionMetadata.regionIdentifier,
-              Realm.register(regionMetadata.realmKey, regionMetadata.realmDomainComponent),
-              regionMetadata.regionKey
-            );
-          }
-        } catch (error) {
-          console.log("error reading or parsing region metadata env var config file");
-        }
-      }
-    }
-  }
 
   // Add region from the Instance Metadata Service
   private static addRegionFromImds(): void {
@@ -314,7 +240,6 @@ export class Region {
     }
 
     // If region short code is not found in the SDK, add regions from the regions config file
-    Region.addRegionsFromConfigFile();
     region = Region.values().find(r => r.regionCode === regionStr);
     if (region) {
       return region.regionId;

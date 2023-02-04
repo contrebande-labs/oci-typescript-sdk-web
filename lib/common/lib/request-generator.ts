@@ -7,7 +7,6 @@ import { Range } from "./range";
 import { HttpRequest } from "./http-request";
 import {
   addAdditionalHeaders,
-  autoDetectContentLengthAndReadBody,
   formatDateToRFC3339
 } from "./helper";
 import { addRetryToken, OPC_RETRY_TOKEN_HEADER } from "./retry-token-header";
@@ -56,12 +55,6 @@ export async function composeRequest(params: RequestParams): Promise<HttpRequest
   const headers = computeHeaders(params);
   const uri = computeUri(params);
   let body = params.bodyContent;
-
-  // If body exists, check if content-length exists and check if user wants to back up binary request body
-  if (body) {
-    const content = await autoDetectContentLengthAndReadBody(headers, params);
-    body = content ? content : body;
-  }
 
   if (body === "{}") {
     return {

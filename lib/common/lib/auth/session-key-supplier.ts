@@ -9,9 +9,11 @@
  * The thread safety of this class is ensured
  */
 
-import { generateKeyPairSync } from "crypto";
+
 import SessionKeySupplier from "./models/session-key-supplier";
 import KeyPair from "./key-pair";
+
+declare const generateKeyPairSync: any;
 
 export default class SessionKeySupplierImpl implements SessionKeySupplier {
   private keyPair: KeyPair;

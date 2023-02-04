@@ -5,7 +5,6 @@
 
 import { HttpClient } from "./http";
 import { AuthenticationDetailsProvider } from "./auth/auth";
-import { Readable } from "stream";
 export interface RawData {
   size: number;
   data: BinaryBody;
@@ -22,7 +21,7 @@ interface ClientParams {
   authenticationDetailsProvider?: AuthenticationDetailsProvider;
 }
 
-export type BinaryBody = Uint8Array | Buffer | Readable | ReadableStream | string | Blob;
+export type BinaryBody = Uint8Array | ReadableStream | string | Blob;
 
 /*
  * Type to intialize service clients

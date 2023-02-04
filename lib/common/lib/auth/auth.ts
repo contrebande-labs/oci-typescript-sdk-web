@@ -5,7 +5,6 @@
 
 import { Region } from "../region";
 import AbstractAuthenticationDetailsProvider from "./models/abstract-authentication-details-provider";
-import { ConfigAccumulator } from "../config-file-reader";
 
 /**
  * An interface provides the authentication details.
@@ -92,7 +91,7 @@ export class SimpleAuthenticationDetailsProvider
     private region?: Region,
     private authType?: string | undefined,
     private delegationToken?: string | undefined,
-    private profileCredentials?: ConfigAccumulator | undefined,
+    private profileCredentials?: undefined,
     private _sessionToken?: string | undefined
   ) {}
 
@@ -180,7 +179,7 @@ export class SimpleAuthenticationDetailsProvider
     return this.delegationToken;
   }
 
-  public getProfileCredentials(): ConfigAccumulator | undefined {
+  public getProfileCredentials(): undefined {
     return this.profileCredentials;
   }
 

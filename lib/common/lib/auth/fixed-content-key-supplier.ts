@@ -5,7 +5,9 @@
 
 import SessionKeySupplier from "./models/session-key-supplier";
 import KeyPair from "./key-pair";
-import { parsePrivateKey } from "sshpk";
+
+
+declare const parsePrivateKey: any;
 
 /**
  * This is a SessionKeySupplier which fakes the ability to refresh its contained key.

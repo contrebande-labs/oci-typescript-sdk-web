@@ -43,10 +43,7 @@ export class EndpointBuilder {
 
     // If regionId does not return a known region, check to see if there is a fallback second level domain from env.OCI_DEFAULT_REALM
     // If no fallback for second level domain, default it to OC1's second level domain.
-    const fallbackSecondLevelDomain = process.env["OCI_DEFAULT_REALM"];
-    let secondLevelDomain = fallbackSecondLevelDomain
-      ? fallbackSecondLevelDomain
-      : Realm.OC1.secondLevelDomain;
+    let secondLevelDomain = Realm.OC1.secondLevelDomain;
     console.log(
       `Unknown regionId [${regionId}], falling back to using ${secondLevelDomain} as the second level domain.`
     );

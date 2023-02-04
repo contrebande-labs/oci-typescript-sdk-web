@@ -3,13 +3,11 @@
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 
-import * as promise from "es6-promise";
-import "isomorphic-fetch";
+
 import { RequestSigner } from "./signer";
 import { HttpRequest } from "./http-request";
 import { getSignerAndReqBody } from "./helper";
-const Breaker = require("opossum");
-promise.polyfill();
+
 
 export interface HttpClient {
   send(
@@ -24,17 +22,12 @@ export interface HttpClient {
 }
 
 export class FetchHttpClient implements HttpClient {
-  private circuitBreaker = (null as unknown) as typeof Breaker;
   private httpOptions: { [key: string]: any } | undefined = undefined;
 
   constructor(
     private readonly signer: RequestSigner | null,
-    circuitBreaker?: typeof Breaker,
     httpOptions?: { [key: string]: any } | undefined
   ) {
-    if (circuitBreaker) {
-      this.circuitBreaker = circuitBreaker;
-    }
 
     if (httpOptions) this.httpOptions = httpOptions;
   }
@@ -71,41 +64,6 @@ export class FetchHttpClient implements HttpClient {
     // Need to convert to type RequestInit for Fetch() type compatibility
     let options: RequestInit = (this.httpOptions as unknown) as RequestInit;
 
-    if (this.circuitBreaker) {
-      return options
-        ? this.circuitBreaker.fire(
-            request,
-            options,
-            targetService,
-            operationName,
-            timestamp,
-            endpoint,
-            apiReferenceLink
-          )
-        : this.circuitBreaker
-            .fire(
-              request,
-              undefined,
-              targetService,
-              operationName,
-              timestamp,
-              endpoint,
-              apiReferenceLink
-            )
-            .then((e: any) => {
-              return e.response ? e.response : e;
-            })
-            .catch((e: any) => {
-              if (e.response) {
-                // If error contains response field, it is an actual server error, return it.
-                return e.response;
-              } else {
-                // These are client side error. Throw exception.
-                throw e;
-              }
-            });
-    } else {
-      return options ? fetch(request, options) : fetch(request);
-    }
+    return options ? fetch(request, options) : fetch(request);
   }
 }

@@ -3,18 +3,19 @@
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
 
-import auth = require("./auth/auth");
+import * as auth from "./auth/auth";
 import { getStringFromRequestBody } from "./helper";
-import jssha = require("jssha");
-import { parsePrivateKey } from "sshpk";
-import UrlParser = require("url");
 import { Method } from "./request-generator";
 import { HttpRequest } from "./http-request";
-import InstancePrincipalsAuthenticationDetailsProviderBuilder from "./auth/instance-principals-authentication-detail-provider";
-import { delegateAuthProvider } from "./auth/helpers/delegate-auth-provider";
+
+type Buffer = any;
+declare const Buffer: Buffer;
+declare const UrlParser: any;
+declare const jssha: any;
+declare const parsePrivateKey: any;
+declare const httpSignature: any;
 
 // tslint:disable-next-line:no-var-requires
-const httpSignature: any = require("http-signature");
 const HEADER_CONTENT_SHA = "x-content-sha256";
 const HEADER_CONTENT_LEN = "Content-Length";
 const HEADER_CONTENT_TYPE = "Content-Type";
@@ -156,12 +157,6 @@ export class DefaultRequestSigner implements RequestSigner {
         HEADER_CONTENT_LEN,
         HEADER_CONTENT_SHA
       );
-    }
-
-    // Always make the check to see if there is a true authenticationDetailsProvider to use
-    const provider = await delegateAuthProvider(this.authenticationDetailsProvider);
-    if (provider) {
-      this.authenticationDetailsProvider = provider;
     }
 
     const keyId = await this.authenticationDetailsProvider.getKeyId();

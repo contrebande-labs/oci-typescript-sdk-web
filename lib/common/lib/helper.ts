@@ -2,15 +2,12 @@
  * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
  * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
  */
-import { statSync, ReadStream } from "fs";
+
 import { OciError } from "./error";
 import { Range } from "./range";
-import { Readable, PassThrough } from "stream";
 import { addOpcRequestId, addUserAgent } from "./headers";
 import { isEmpty } from "./utils";
 import { RequestParams } from "./request-generator";
-import { RawData, BinaryBody } from "./types";
-import getChunk from "./chunker";
 
 interface ReqBodyAndContentLength {
   body: any;
@@ -120,49 +117,9 @@ export async function getStringFromResponseBody(body: any): Promise<string> {
     return body as string;
   }
 
-  if (body instanceof Readable) {
-    // body is a stream type
-    return readStringFromReadable(body);
-  }
-  // else if (body instanceof Blob) {
-  //   // body is a blob type
-  //   return readStringFromBlob(body);
-  // } else if (body instanceof ReadableStream) {
-  //   // body is a fetch readableStream type
-  //   return readStringFromFetchReadableStream(body);
-  // }
-  else {
-    // unknown type, unable to read body content for signing, reject it
-    throw new Error("Unable to read body content to sign the request");
-  }
+  throw new Error("Unable to read body content to sign the request");
 }
 
-// read string from Readable asynchronously, return a string content of it
-export async function readStringFromReadable(readable: Readable): Promise<string> {
-  let contentBuffer: Array<string> = [];
-  let size = 0;
-  const MEMIBYTES = 1024 * 1024;
-  const sizeLimit = 2000 * MEMIBYTES;
-  // set the encoding to return string instead of Buffer
-  readable.setEncoding("utf8");
-
-  return new Promise<string>((resolve, reject) => {
-    readable.on("end", () => {
-      resolve(contentBuffer.join(""));
-    });
-    readable.on("data", chunk => {
-      if (size > sizeLimit) {
-        throw Error("Tried to read stream but content length is greater than 2GB.");
-      }
-      contentBuffer.push(chunk);
-      size += chunk.length;
-    });
-    readable.on("error", err => {
-      // if error happened, it will be catched at http signer global error handling
-      reject(err);
-    });
-  });
-}
 
 // read string from fetch ReadbaleString asynchronously, return a string content of it
 // export async function readStringFromFetchReadableStream(readable: ReadableStream): Promise<string> {
@@ -234,12 +191,6 @@ export function getSignerAndReqBody(
   if (typeof body === "string") {
     return { signerBody: body, requestBody: body };
   }
-  // If body instance of Readable , duplicate the stream for signer and request body
-  else if (body instanceof Readable) {
-    const signerbody = body.pipe(new PassThrough());
-    const reqBody = body.pipe(new PassThrough());
-    return { signerBody: signerbody, requestBody: reqBody };
-  }
   // //if body instance of blob, can be duplicated.
   // else if (body instanceof Blob) {
   //   return { signerBody: body, requestBody: body };
@@ -260,40 +211,6 @@ export function addAdditionalHeaders(headers: Headers, params: RequestParams) {
   addUserAgent(headers);
 }
 
-export async function autoDetectContentLengthAndReadBody(headers: Headers, params: RequestParams) {
-  // Auto Detect content-length if needed, also read binary content if stream length cannot be determined.
-  const reqHeaders = params.headerParams;
-  if (reqHeaders) {
-    const shouldReadBodyAndCalculateContentLength =
-      ("content-length" in reqHeaders && reqHeaders["content-length"] === undefined) ||
-      ("Content-Length" in reqHeaders && reqHeaders["Content-Length"] === undefined) ||
-      params.backupBinaryBody;
-    if (shouldReadBodyAndCalculateContentLength) {
-      const { body, contentLength } = await calculateContentLengthAndBodyContent(
-        params.bodyContent!
-      );
-      headers.append("content-length", String(contentLength));
-      return body;
-    }
-  }
-}
-
-// Helper method to auto detect content-length if not given.
-async function calculateContentLengthAndBodyContent(
-  body: BinaryBody
-): Promise<ReqBodyAndContentLength> {
-  try {
-    const dataFeeder = getChunk(body, Number.MAX_SAFE_INTEGER);
-    const dataPart = (await dataFeeder.next()).value as RawData;
-    const content = dataPart.data;
-    const contentLength = dataPart.size;
-    return { body: content, contentLength };
-  } catch (e) {
-    throw Error(
-      "SDK could not calculate contentLength from the request stream, please add contentLength and try again."
-    );
-  }
-}
 
 // Helper method to format Date Objects to RFC3339 timestamp string.
 export function formatDateToRFC3339(date: Date): string {
@@ -319,10 +236,7 @@ export async function getStringFromRequestBody(body: any): Promise<string> {
     return body as string;
   }
 
-  if (body instanceof Readable) {
-    // body is a stream type
-    return readStringFromReadable(body);
-  }
+
   // else if (body instanceof Blob) {
   //   // body is a blob type
   //   return readStringFromBlob(body);
@@ -346,7 +260,6 @@ export function isReadableStream(body: any): Boolean {
 
 export function byteLength(input: any) {
   if (input === null || input === undefined) return 0;
-  if (typeof input === "string") input = Buffer.from(input);
   if (typeof input.byteLength === "number") {
     return input.byteLength;
   } else if (typeof input.length === "number") {
