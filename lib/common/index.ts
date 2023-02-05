@@ -133,7 +133,7 @@ class OracleCloudAPIRequestSigner {
 
     const signatureBase64 = base64(signature);
 
-    const authorizationHeader = `Signature version="1",${ signatureBase64 }`;
+    const authorizationHeader = `Signature version="1",keyId="${ keyId }",algorithm="rsa",headers="${ headersToSign.join(' ') }",signature="${ signatureBase64 }"`;
 
     request.headers.set("authorization", authorizationHeader);
   }
