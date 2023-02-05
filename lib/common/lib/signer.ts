@@ -32,6 +32,8 @@ export class OracleCloudAPIWebRequestSigner {
 
     request.headers.set("host", url.hostname);
 
+    request.headers.set("opc-request-id", crypto.randomUUID());
+
     request.headers.set("x-date", new Date().toUTCString());
 
     var headersToSign = [...OracleCloudAPIWebRequestSigner.headersToSign];
