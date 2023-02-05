@@ -1,17 +1,8 @@
-/**
- * Copyright (c) 2020, 2021 Oracle and/or its affiliates.  All rights reserved.
- * This software is dual-licensed to you under the Universal Permissive License (UPL) 1.0 as shown at https://oss.oracle.com/licenses/upl or Apache License 2.0 as shown at http://www.apache.org/licenses/LICENSE-2.0. You may choose either license.
- */
-
 import { AuthenticationDetailsProvider } from "./lib/auth";
 
-// tslint:disable-next-line:no-var-requires
 const HEADER_CONTENT_SHA = "x-content-sha256";
 const HEADER_CONTENT_LEN = "Content-Length";
 const HEADER_CONTENT_TYPE = "Content-Type";
-const OPC_OBO_TOKEN = "opc-obo-token";
-// The Subtle crypto implementation in IE11 will silently fail to digest an empty string.
-// We have to manually define that value here to avoid hanging forever
 const EMPTY_SHA = "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=";
 
 
@@ -147,7 +138,5 @@ class OracleCloudAPIRequestSigner {
     request.headers.set("authorization", authorizationHeader);
   }
 }
-
-
 
 export { AuthenticationDetailsProvider, OracleCloudAPIRequestSigner };
