@@ -35,18 +35,8 @@ export class Region {
 
   private static KNOWN_REGIONS: Map<string, Region> = new Map();
   private static hasCalledForImds: boolean = false;
-  private static _hasUsedConfigFile: boolean = false;
-  private static hasUsedEnvVar: boolean = false;
   private static imdsRegionMetadata: RegionMetadataSchema | undefined;
   private static hasWarnedAboutValuesWithoutInstanceMetadataService: boolean = false;
-
-  private static REGIONS_CONFIG_FILE_PATH: string = "~/.oci/regions-config.json";
-  private static OCI_REGION_METADATA_ENV_VAR: string = "OCI_REGION_METADATA";
-  private static IMDS_BASE_URL: string = "http://169.254.169.254/opc/v2/";
-  private static METADATA_AUTH_HEADERS: string = "Bearer Oracle";
-  private static AUTHORIZATION: string = "Authorization";
-  private static CONTENT_TYPE_HEADER: string = "Content-Type";
-  private static CONTENT_TYPE_HEADER_VALUE: string = "application/json";
 
   private constructor(regionId: string, realm: Realm, regionCode?: string) {
     this._realm = realm;
@@ -230,9 +220,5 @@ export class Region {
     }
 
     return regionStr;
-  }
-
-  public static set hasUsedConfigFile(bool: boolean) {
-    Region._hasUsedConfigFile = bool;
   }
 }
