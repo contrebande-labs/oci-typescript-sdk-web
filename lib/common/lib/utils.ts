@@ -1,8 +1,3 @@
-const HEADER_CONTENT_SHA = "x-content-sha256";
-const HEADER_CONTENT_LEN = "Content-Length";
-const HEADER_CONTENT_TYPE = "Content-Type";
-const EMPTY_SHA = "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=";
-
 /*
 Convert a string into an ArrayBuffer
 from https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
@@ -16,7 +11,7 @@ function str2ab(str: string) {
   return buf;
 }
 
-function base64(buf: ArrayBuffer) {
+export function base64(buf: ArrayBuffer) {
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
 
@@ -25,7 +20,7 @@ Import a PEM encoded RSA private key, to use for RSA-PSS signing.
 Takes a string containing the PEM encoded key, and returns a Promise
 that will resolve to a CryptoKey representing the private key.
 */
-async function parsePrivateKey(pem: String) {
+export async function parsePrivateKey(pem: String) {
   // fetch the part of the PEM string between header and footer
   const pemContents = pem
   .replaceAll("-----BEGIN PRIVATE KEY-----", "")

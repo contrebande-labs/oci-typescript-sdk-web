@@ -1,7 +1,10 @@
 import { AuthenticationDetailsProvider } from "./auth";
+import { base64, parsePrivateKey } from "./utils";
 
-
-
+const HEADER_CONTENT_SHA = "x-content-sha256";
+const HEADER_CONTENT_LEN = "Content-Length";
+const HEADER_CONTENT_TYPE = "Content-Type";
+const EMPTY_SHA = "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=";
 
 export class OracleCloudAPIWebRequestSigner {
   private static readonly headersToSign = ["x-date", "host"];
@@ -35,19 +38,21 @@ export class OracleCloudAPIWebRequestSigner {
 
     if (OracleCloudAPIWebRequestSigner.methodsThatRequireExtraHeaders.indexOf(request.method.toUpperCase()) > 0) {
 
-      if (!request.headers.has(HEADER_CONTENT_TYPE)) {
-        request.headers.set(HEADER_CONTENT_TYPE, "application/json");
-      }
+      request.headers.set(HEADER_CONTENT_TYPE, "application/json");
 
       if (requestBody && requestBody.length > 0) {
+
         const hash = await crypto.subtle.digest("SHA-256", requestBody);
         const b64hash = base64(hash);
         request.headers.set(HEADER_CONTENT_SHA, b64hash);
         request.headers.set(HEADER_CONTENT_LEN, `${ requestBody.length }`)
+
       } else {
+
         // if buffer is empty, it can only be an empty string payload
         request.headers.set(HEADER_CONTENT_SHA, EMPTY_SHA);
         request.headers.set(HEADER_CONTENT_LEN, `0`);
+
       }
 
       headersToSign = headersToSign.concat(
@@ -55,9 +60,10 @@ export class OracleCloudAPIWebRequestSigner {
         HEADER_CONTENT_LEN,
         HEADER_CONTENT_SHA
       );
+
     }
 
-    const keyId = await this.authenticationDetailsProvider.getKeyId();
+    const keyId = this.authenticationDetailsProvider.getKeyId();
 
     // Check if privateKey exists or if the authenticationDetailsProvider's private key have changed.
     let authPrivateKey = this.authenticationDetailsProvider.getPrivateKey();
